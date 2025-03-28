@@ -13,7 +13,7 @@ namespace TagHelperPack;
 [HtmlTargetElement("*", Attributes = AspAuthzAttributeName)]
 [HtmlTargetElement("*", Attributes = AspAuthzPolicyAttributeName)]
 [HtmlTargetElement("*", Attributes = AspAuthzRoleAttributeName)]
-[HtmlTargetElement("*", Attributes = AspAuthzPolicyPermissionAttributeName)]
+[HtmlTargetElement("*", Attributes = AspAuthzPolicyResourceAttributeName)]
 public class AuthzTagHelper : TagHelper
 {
     internal static object SuppressedKey = new();
@@ -22,7 +22,7 @@ public class AuthzTagHelper : TagHelper
     private const string AspAuthzAttributeName = "asp-authz";
     private const string AspAuthzPolicyAttributeName = "asp-authz-policy";
     private const string AspAuthzRoleAttributeName = "asp-authz-role";
-    private const string AspAuthzPolicyPermissionAttributeName = "asp-authz-permission";
+    private const string AspAuthzPolicyResourceAttributeName = "asp-authz-resource";
 
     private readonly IAuthorizationService _authz;
 
@@ -60,10 +60,10 @@ public class AuthzTagHelper : TagHelper
     public string RequiredRole { get; set; }
 
     /// <summary>
-    /// A permission that must be satisfied in order for the current element to be rendered. <c>asp-authz-policy</c> should be set as well.
+    /// An optional resource used by the authorization policy handler. <c>asp-authz-policy</c> should be set as well.
     /// </summary>
-    [HtmlAttributeName(AspAuthzPolicyPermissionAttributeName)]
-    public string RequiredPolicyPermission { get; set; }
+    [HtmlAttributeName(AspAuthzPolicyResourceAttributeName)]
+    public object RequiredPolicyResource { get; set; }
 
     /// <summary>
     /// Gets or sets the <see cref="ViewContext"/>.
@@ -85,7 +85,12 @@ public class AuthzTagHelper : TagHelper
             throw new ArgumentNullException(nameof(output));
         }
 
-        if(!string.IsNullOrEmpty(RequiredRole) && !string.IsNullOrEmpty(RequiredPolicy))
+        if (RequiredPolicyResource != null && string.IsNullOrEmpty(RequiredPolicy))
+        {
+            throw new ArgumentNullException(AspAuthzPolicyAttributeName);
+        }
+
+        if (!string.IsNullOrEmpty(RequiredRole) && !string.IsNullOrEmpty(RequiredPolicy))
         {
             throw new InvalidOperationException($"{AspAuthzRoleAttributeName} and {AspAuthzPolicyAttributeName} cannot be set at the same time.");
         }
@@ -107,10 +112,10 @@ public class AuthzTagHelper : TagHelper
         else if (!string.IsNullOrEmpty(RequiredPolicy))
         {
             bool authorized;
-            if (!string.IsNullOrEmpty(RequiredPolicyPermission))
+            if (RequiredPolicyResource != null)
             {
                 // auth-policy="foo" & user is authorized for policy "foo" based on permission
-                var cacheKey = AspAuthzPolicyPermissionAttributeName + "." + RequiredPolicyPermission;
+                var cacheKey = AspAuthzPolicyResourceAttributeName + "." + RequiredPolicyResource;
                 var cachedResult = ViewContext.ViewData[cacheKey];
                 if (cachedResult != null)
                 {
@@ -118,7 +123,7 @@ public class AuthzTagHelper : TagHelper
                 }
                 else
                 {
-                    var authResult = await _authz.AuthorizeAsync(user, RequiredPolicyPermission, RequiredPolicy);
+                    var authResult = await _authz.AuthorizeAsync(user, RequiredPolicyResource, RequiredPolicy);
                     authorized = authResult.Succeeded;
                     ViewContext.ViewData[cacheKey] = authorized;
                 }
