@@ -111,43 +111,24 @@ internal static class HtmlHelperExtensions
         var keysConcatValuesWithSpace = new string[] { "class" };
         var keysConcatValuesWithSemiColon = new string[] { "style" };
 
-        var htmlAttributesDict = newHtmlAttributesObject as IDictionary<string, object>;
-        var defaultHtmlAttributesDict = existingHtmlAttributesObject as IDictionary<string, object>;
-
-        IDictionary<string, object> htmlAttributes = (htmlAttributesDict != null)
-            ? new RouteValueDictionary(htmlAttributesDict)
-            : HtmlHelper.AnonymousObjectToHtmlAttributes(newHtmlAttributesObject);
-
-        IDictionary<string, object> existingHtmlAttributes = (defaultHtmlAttributesDict != null)
-            ? new RouteValueDictionary(defaultHtmlAttributesDict)
-            : HtmlHelper.AnonymousObjectToHtmlAttributes(existingHtmlAttributesObject);
+        IDictionary<string, object> htmlAttributes = HtmlHelper.AnonymousObjectToHtmlAttributes(newHtmlAttributesObject);
+        IDictionary<string, object> existingHtmlAttributes = HtmlHelper.AnonymousObjectToHtmlAttributes(existingHtmlAttributesObject);
 
         foreach (var item in htmlAttributes)
         {
+            string separator = string.Empty;
             if (keysConcatValuesWithSpace.Contains(item.Key))
             {
-                existingHtmlAttributes.TryGetValue(item.Key, out object? value);
-                if (value != null && item.Value != null)
-                {
-                    existingHtmlAttributes[item.Key] = value != null ?
-                        string.Format("{0} {1}", existingHtmlAttributes[item.Key], item.Value)
-                        : item.Value;
-                }
+                separator = " ";
             }
             else if (keysConcatValuesWithSemiColon.Contains(item.Key))
             {
-                existingHtmlAttributes.TryGetValue(item.Key, out object? value);
-                if (value != null && item.Value != null)
-                {
-                    existingHtmlAttributes[item.Key] = value != null ?
-                        string.Format("{0}; {1}", existingHtmlAttributes[item.Key], item.Value)
-                        : item.Value;
-                }
+                separator = "; ";
             }
-            else
-            {
-                existingHtmlAttributes[item.Key] = item.Value;
-            }
+            existingHtmlAttributes.TryGetValue(item.Key, out object? value);
+            existingHtmlAttributes[item.Key] = value != null && !string.IsNullOrEmpty(separator) ?
+                    string.Format("{0}{1}{2}", existingHtmlAttributes[item.Key], separator, item.Value)
+                    : item.Value;
         }
 
         return existingHtmlAttributes;
