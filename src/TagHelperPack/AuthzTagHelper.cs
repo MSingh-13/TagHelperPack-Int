@@ -85,6 +85,11 @@ public class AuthzTagHelper : TagHelper
             throw new ArgumentNullException(nameof(output));
         }
 
+        if(!string.IsNullOrEmpty(RequiredRole) && !string.IsNullOrEmpty(RequiredPolicy))
+        {
+            throw new InvalidOperationException($"{AspAuthzRoleAttributeName} and {AspAuthzPolicyAttributeName} cannot be set at the same time.");
+        }
+
         if (context.SuppressedByAspIf() || context.SuppressedByAspAuthz())
         {
             return;
