@@ -95,7 +95,7 @@ public class DisplayTagHelper : TagHelper
         ((IViewContextAware)_htmlHelper).Contextualize(ViewContext);
 
         var cssViewData = new { htmlAttributes = new { @class = Class, style = Style } };
-        var finalViewData = _htmlHelper.MergeHtmlAttributes(cssViewData, ViewData);
+        var finalViewData = _htmlHelper.MergeHtmlAttributesObjects(cssViewData, ViewData);
         output.Content.SetHtmlContent(_htmlHelper.Display(For, HtmlFieldName, TemplateName, finalViewData));
 
         output.TagName = null;

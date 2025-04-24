@@ -98,39 +98,4 @@ internal static class HtmlHelperExtensions
 
         return htmlHelper.Editor(expression, templateName, htmlFieldName, additionalViewData);
     }
-
-    /// <summary>
-    /// Merge values from 2 anonymous or IDictionary objects. Values of overlapping keys from the 'existing values' object are replaced by the values 
-    /// from the 'new values' object except if the keys are 'class' or 'style', in which case the values are concatentated with a space or ; respectively.
-    /// </summary>
-    /// <param name="newHtmlAttributesObject">new values</param>
-    /// <param name="existingHtmlAttributesObject">existing values</param>
-    /// <returns></returns>
-    internal static IDictionary<string, object> MergeHtmlAttributes(this IHtmlHelper helper, object newHtmlAttributesObject, object existingHtmlAttributesObject)
-    {
-        var keysConcatValuesWithSpace = new string[] { "class" };
-        var keysConcatValuesWithSemiColon = new string[] { "style" };
-
-        IDictionary<string, object> htmlAttributes = HtmlHelper.AnonymousObjectToHtmlAttributes(newHtmlAttributesObject);
-        IDictionary<string, object> existingHtmlAttributes = HtmlHelper.AnonymousObjectToHtmlAttributes(existingHtmlAttributesObject);
-
-        foreach (var item in htmlAttributes)
-        {
-            string separator = string.Empty;
-            if (keysConcatValuesWithSpace.Contains(item.Key))
-            {
-                separator = " ";
-            }
-            else if (keysConcatValuesWithSemiColon.Contains(item.Key))
-            {
-                separator = "; ";
-            }
-            existingHtmlAttributes.TryGetValue(item.Key, out object? value);
-            existingHtmlAttributes[item.Key] = value != null && !string.IsNullOrEmpty(separator) ?
-                    string.Format("{0}{1}{2}", existingHtmlAttributes[item.Key], separator, item.Value)
-                    : item.Value;
-        }
-
-        return existingHtmlAttributes;
-    }
 }
